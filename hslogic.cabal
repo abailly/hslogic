@@ -1,0 +1,27 @@
+Name:                 hslogic
+Version:              1.0
+Build-type:           Simple
+Synopsis:             This is a sample project
+License:              BSD3
+License-file:         LICENSE
+Author:               Arnaud Bailly <arnaud.oqube@gmail.com>
+Build-Depends:        base
+Cabal-version:        >= 1.2
+
+Executable hslogic
+  build-depends:      base,
+                      pretty == 1.1.1.0,
+                      unordered-containers == 0.2.3.0,
+                      hashable == 1.1.2.5,
+                      utf8-string == 0.3.7
+  hs-source-dirs:     src
+  main-is:            hslogic.hs
+  ghc-options:        -Wall
+
+Test-Suite hslogic-test
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          hslogic-test.hs
+    build-depends:    base,
+                      doctest == 0.9.10
+
