@@ -10,8 +10,10 @@ import System.IO(stdout,hSetBuffering,BufferMode(..))
 loop :: IO ()
 loop = do
   putStr "> "
-  t <- getLine >>= return . parse
-  putStrLn (show $ pp t)
+  l <- getLine
+  case parseTerm l of
+    Left e  -> putStrLn e
+    Right v -> putStrLn (show $ pp v)
   loop
 
 main :: IO ()
