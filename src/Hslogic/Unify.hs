@@ -9,18 +9,7 @@ import Data.Hashable
 import Text.PrettyPrint((<>), hcat, text, Doc, char)
 import Data.List(union)
 
-data VarName = VarName String deriving (Eq, Read)
-
-instance Show VarName where
-  show (VarName v) = v
-
-mk_var :: String -> VarName
-mk_var = VarName
-
-data Term
-  = Var VarName
-  | Fn String [Term]
-  deriving (Eq,Show,Read)
+import Hslogic.Types
 
 class PrettyPrintable a where
   pp :: a -> Doc
@@ -35,10 +24,13 @@ instance PrettyPrintable Term where
   pp (Fn n (t:ts)) = text n
                      <> char '('
                      <> pp t
-                     <> hcat [char ',' <> pp t | t <- ts ]
+                     <> hcat [char ',' <> pp t' | t' <- ts ]
                      <> char ')'
 
-
+instance PrettyPrintable Clause where
+  pp (Clause h []) = pp h <> char '.'
+  pp (Clause h (p:ps)) = pp h <> text " -: " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ]
+  
 -- |Pretty print a term
 --
 -- >>> pretty (Fn "install" [ Var (VarName "X") ])

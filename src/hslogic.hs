@@ -11,7 +11,7 @@ loop :: IO ()
 loop = do
   putStr "> "
   l <- getLine
-  case parseTerm l of
+  case doParse clauseParser l of
     Left e  -> putStrLn e
     Right v -> putStrLn (show $ pp v)
   loop

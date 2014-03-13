@@ -1,9 +1,9 @@
 module Hslogic.Parse where
-import Hslogic.Unify
+import Hslogic.Types
 import Text.ParserCombinators.Parsec
 
-parseTerm :: String -> Either String Term
-parseTerm  input = case parse termParser "" input of
+doParse :: Parser a -> String -> Either String a
+doParse p input = case parse p "" input of
   Left e  -> Left $ show e
   Right v -> Right v
 
@@ -41,5 +41,18 @@ fun = do
 termParser :: Parser Term
 termParser = var <|> fun
 
-
-
+-- |Parse a clause
+--
+-- >>> parseTest clauseParser "foo(X) -: bar, qix(X)."
+-- Clause (Fn "foo" [Var X]) [Fn "bar" [],Fn "qix" [Var X]]
+clauseParser :: Parser Clause
+clauseParser = do
+  h <- spaces >> termParser
+  spaces
+  cls <- premises <|> return []
+  char '.'
+  return $ Clause h cls
+    where
+      premises :: Parser [Term]
+      premises = string "-:" >> spaces >> (termParser `sepBy`
+                                           (spaces >> char ',' >> spaces))
