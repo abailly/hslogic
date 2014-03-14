@@ -14,7 +14,6 @@ import Hslogic.Types
 class PrettyPrintable a where
   pp :: a -> Doc
 
-
 instance PrettyPrintable VarName where
   pp v = text $ show v
 
@@ -27,9 +26,15 @@ instance PrettyPrintable Term where
                      <> hcat [char ',' <> pp t' | t' <- ts ]
                      <> char ')'
 
+instance Show Term where
+  show = show . pp
+  
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
   pp (Clause h (p:ps)) = pp h <> text " -: " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ]
+  
+instance Show Clause where
+  show = show . pp
   
 -- |Pretty print a term
 --
@@ -58,23 +63,25 @@ class Substitution s where
   (+->)             :: VarName -> Term -> s
   extend_with       :: s -> s -> s
 
-
 instance Hashable VarName where
   hash (VarName s) = hash s
   hashWithSalt i (VarName s) = hashWithSalt i s
 
-type Subst = (H.HashMap VarName Term)
+newtype Subst = Subst { substMap :: (H.HashMap VarName Term) }
 
 instance Substitution Subst where
-  emptySubstitution = H.empty
-  lookup_var        = flip H.lookup
-  (+->)             = H.singleton
-  extend_with       = H.union
+  emptySubstitution = Subst H.empty
+  lookup_var        = flip H.lookup . substMap
+  v +-> t           = Subst $ H.singleton v t
+  extend_with s s'  = Subst $ H.union (substMap s) (substMap s') 
 
 instance PrettyPrintable Subst where
-  pp = hcat .
-       map ( \ (k,v) -> pp k <> text " -> " <> pp v) .
-       H.toList
+  pp s = char '['
+       <> hcat (map ( \ (k,v) -> pp k <> text " → " <> pp v) (H.toList $ substMap s))
+       <> char ']'
+
+instance Show Subst where
+  show = show . pp
   
 class Substitutible t where
   apply :: Substitution s => s -> t -> t
@@ -126,6 +133,6 @@ infixl 8 <->
 -- |Unify two unifiable terms 
 --
 -- >>>  (Fn "install" [ Var (VarName "X") ]) <-> Fn "install" [ Fn "check" [ Var (VarName "Y") ]]
--- Just fromList [(X,Fn "check" [Var Y])]
+-- Just [X → check(Y)]
 (<->) :: Term -> Term -> Maybe Subst
 a <-> b = unify a b
