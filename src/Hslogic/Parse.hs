@@ -44,7 +44,7 @@ termParser = var <|> fun
 -- |Parse a clause
 --
 -- >>> parseTest clauseParser "foo(X) -: bar, qix(X)."
--- foo(X) -: bar, qix(X)
+-- foo(X) -: bar, qix(X).
 clauseParser :: Parser Clause
 clauseParser = do
   h <- spaces >> termParser
@@ -56,3 +56,13 @@ clauseParser = do
       premises :: Parser [Term]
       premises = string "-:" >> spaces >> (termParser `sepBy`
                                            (spaces >> char ',' >> spaces))
+
+fromRight :: Either a b -> b
+fromRight (Right b) = b
+
+term :: String -> Term
+term = fromRight . doParse termParser
+
+clause :: String -> Clause
+clause = fromRight . doParse clauseParser
+

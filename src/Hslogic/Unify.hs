@@ -6,10 +6,11 @@ module Hslogic.Unify where
 
 import qualified Data.HashMap.Lazy as H
 import Data.Hashable
-import Text.PrettyPrint((<>), hcat, text, Doc, char)
-import Data.List(union)
+import Text.PrettyPrint((<>), hcat, text, Doc, char,punctuate)
+import Data.List(union,(\\))
 
 import Hslogic.Types
+import Hslogic.Parse
 
 class PrettyPrintable a where
   pp :: a -> Doc
@@ -31,11 +32,11 @@ instance Show Term where
   
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
-  pp (Clause h (p:ps)) = pp h <> text " -: " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ]
+  pp (Clause h (p:ps)) = pp h <> text " -: " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
   
 instance Show Clause where
   show = show . pp
-  
+
 -- |Pretty print a term
 --
 -- >>> pretty (Fn "install" [ Var (VarName "X") ])
@@ -62,26 +63,45 @@ class Substitution s where
   emptySubstitution :: s
   (+->)             :: VarName -> Term -> s
   extend_with       :: s -> s -> s
+  -- |Restricts the substitution to the given variables
+  (-/-)             :: s -> [VarName] -> s
 
 instance Hashable VarName where
   hash (VarName s) = hash s
   hashWithSalt i (VarName s) = hashWithSalt i s
 
-newtype Subst = Subst { substMap :: (H.HashMap VarName Term) }
+newtype Subst = Subst { substMap :: (H.HashMap VarName Term) } deriving Eq
 
 instance Substitution Subst where
   emptySubstitution = Subst H.empty
   lookup_var        = flip H.lookup . substMap
   v +-> t           = Subst $ H.singleton v t
-  extend_with s s'  = Subst $ H.union (substMap s) (substMap s') 
+  extend_with s s'  = Subst $ H.union (substMap s) (substMap s')
+  s -/- vs          = Subst $ H.filterWithKey (\ k _ -> k `elem` vs) (substMap s)
 
+instance PrettyPrintable (VarName,Term) where
+  pp (k,v) = pp k <> text " → " <> pp v
+  
 instance PrettyPrintable Subst where
   pp s = char '['
-       <> hcat (map ( \ (k,v) -> pp k <> text " → " <> pp v) (H.toList $ substMap s))
+       <> hcat (punctuate (char ',') (map pp (H.toList $ substMap s)))
        <> char ']'
 
 instance Show Subst where
   show = show . pp
+  
+-- |Renames bound and free variables of a clause to fresh variables
+--
+-- >>> fresh 1 (clause "foo(X) -: bar(Z), X, quux(Z), Y.")
+-- (4,foo(X1) -: bar(X2), X1, quux(X2), X3.)
+fresh :: Int -> Clause -> (Int, Clause)
+fresh count (Clause ch cps) = let bound = vars_in ch
+                                  free  = vars_in cps \\ bound
+                                  count' = count + (length bound + length free)
+                                  freshvars = map (Var . mk_var . ('X' :) . show) [count .. count']
+                                  mapping   = zipWith (+->) (bound ++ free) freshvars :: [Subst]
+                                  subst     = foldl extend_with emptySubstitution mapping
+                              in  (count', Clause (subst `apply` ch) (map (subst `apply`) cps))
   
 class Substitutible t where
   apply :: Substitution s => s -> t -> t
@@ -111,7 +131,7 @@ instance Unifiable a => Unifiable [a] where
 
 instance Unifiable Term where
   unify (Var l_v) r@(Var r_v)                    -- 1
-   | l_v == r_v = return $ emptySubstitution     -- 2
+   | l_v == r_v = return $ emptySubstitution      -- 2
    | otherwise  = return $ l_v +-> r             -- 3
 
   unify (Var l_v)  r@(Fn _ _)                    -- 4
