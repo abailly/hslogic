@@ -46,8 +46,8 @@ sampleClauses = (map (fromRight . doParse clauseParser) [
 -- [[X1 → quux]]
 solve :: Clauses -> (Int, Subst, [Term]) -> [Maybe (Int, Subst, [Term])]
 solve _  (i,s,[])           = [Just (i,s,[])]
-solve []  t                 = [Nothing]
-solve cs a@(i,s,terms@(t:ts)) =
+solve []  _                 = [Nothing]
+solve cs (i,s,terms@(t:ts)) =
   case selectClause i cs t of
     Just (i', s',ts',cs') -> let s''= s `extend_with` s'
                             in solve cs (i', s'', ts' ++ map (s'' `apply`) ts)
