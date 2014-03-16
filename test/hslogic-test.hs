@@ -1,4 +1,8 @@
 import Test.DocTest
+import System.Directory(setCurrentDirectory)
 
 main :: IO ()
-main = doctest ["src/hslogic.hs"]
+main = do
+  -- assumes it is run at root of project directory
+  setCurrentDirectory "src"
+  doctest ["Hslogic.Solve"]
