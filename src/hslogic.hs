@@ -3,12 +3,14 @@ module Main(main) where
 
 import Prelude hiding(getLine,putStr,putStrLn)
 import Control.Monad.State
-import Hslogic.Types
-import Hslogic.Parse
-import Hslogic.Solve
 import System.IO.UTF8
 import System.IO(stdout,hSetBuffering,BufferMode(..))
 import System.Console.ANSI
+import System.Exit
+
+import Hslogic.Types
+import Hslogic.Parse
+import Hslogic.Solve
 
 data CurrentState = C [Clause] [Subst]
 
@@ -29,23 +31,29 @@ displaySolution clauses (s:ss) = do
   put $ C clauses ss
 displaySolution  _      _      = color Red $ liftIO $ putStrLn "??"
 
-
-loop :: StateT CurrentState IO ()
-loop = do
-  C clauses sol <- get 
-  liftIO $ putStr "> "
-  l <- lift getLine
-  case l of
-    "?"         -> color Green $ liftIO $ mapM_ putStrLnPretty clauses
-    ""          -> displaySolution clauses sol
-    ('?':'-':s) -> case doParse termParser s of
+trySolving :: Clauses -> String -> StateT CurrentState IO ()
+trySolving clauses s = case doParse termParser s of
       Left e  -> color Red $ liftIO (putStrLn e)
       Right t -> displaySolution clauses (solutions clauses [t])
-    c           -> do
+
+extendClauses :: Clauses -> [Subst] -> String -> StateT CurrentState IO ()
+extendClauses clauses sol c = do
       clauses' <- case doParse clauseParser c of
         Left e  -> color Red $ liftIO (putStrLn e) >> return clauses
         Right v -> return $ clauses ++ [v]
       put $ C clauses' sol
+      
+loop :: StateT CurrentState IO ()
+loop = do
+  C clauses sol <- get 
+  liftIO $ putStr "> "
+  l <- liftIO $ catch getLine (\ _ -> exitWith ExitSuccess)
+  case l of
+    "?"         -> color Green $ liftIO $ mapM_ putStrLnPretty clauses
+    "exit"      -> liftIO $ color Green (putStrLn "Bye!") >> exitWith ExitSuccess
+    ""          -> displaySolution clauses sol
+    ('?':'-':s) -> trySolving clauses s
+    c           -> extendClauses clauses sol c
   loop
 
 main :: IO ()
