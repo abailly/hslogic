@@ -17,7 +17,7 @@ var = do
   s <- many alphaNum
   return $ Var (VarName (i : s))
 
--- | Parse a function
+-- | Parse a predicate/function.
 --
 -- >>> parseTest fun "foo"
 -- foo
@@ -34,12 +34,17 @@ fun = do
   where
     funArgs :: Parser [ Term ]
     funArgs = between (char '(' >> spaces)
-                      (spaces >> char ')' >> spaces)
+                      (spaces >> char ')')
                       (termParser `sepBy`
                        (spaces >> char ',' >> spaces)) 
-  
+
+
+-- | Parse a term.
+--
+-- >>> parseTest termParser " foo"
+-- foo
 termParser :: Parser Term
-termParser = var <|> fun
+termParser = spaces >> (var <|> fun)
 
 -- |Parse a clause
 --
