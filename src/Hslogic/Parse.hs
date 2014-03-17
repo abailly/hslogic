@@ -55,16 +55,17 @@ clauseParser = do
   h <- spaces >> termParser
   spaces
   cls <- premises <|> return []
-  char '.'
-  return $ Clause h cls
-    where
+  char '.' >> return (Clause h cls)
+      where
       premises :: Parser [Term]
       premises = string "-:" >> spaces >> (termParser `sepBy`
                                            (spaces >> char ',' >> spaces))
 
 fromRight :: Either a b -> b
 fromRight (Right b) = b
+fromRight _         = error "fromRight must only be used on a Right either..."
 
+  
 term :: String -> Term
 term = fromRight . doParse termParser
 

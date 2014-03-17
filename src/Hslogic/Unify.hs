@@ -5,11 +5,10 @@
 module Hslogic.Unify where
 
 import qualified Data.HashMap.Lazy as H
-import Data.Hashable
+
 import Data.List(union,(\\))
 
 import Hslogic.Types
-import Hslogic.Parse
 
 class ContainsVars t where
   vars_in :: t -> [VarName]
@@ -30,10 +29,6 @@ class Substitution s where
   extend_with       :: s -> s -> s
   -- |Restricts the substitution to the given variables
   (-/-)             :: s -> [VarName] -> s
-
-instance Hashable VarName where
-  hash (VarName s) = hash s
-  hashWithSalt i (VarName s) = hashWithSalt i s
 
 instance Substitution Subst where
   emptySubstitution = Subst H.empty

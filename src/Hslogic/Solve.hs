@@ -1,7 +1,7 @@
 module Hslogic.Solve where
 
-import Data.Tuple.Select(sel2,sel3)
-import Data.Maybe(fromJust,catMaybes)
+import Data.Tuple.Select
+import Data.Maybe
 import Hslogic.Types
 import Hslogic.Unify
 import Hslogic.Parse

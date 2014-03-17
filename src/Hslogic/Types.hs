@@ -3,12 +3,18 @@
 module Hslogic.Types where
 
 import Text.PrettyPrint((<>), hcat, text, Doc, char,punctuate)
+import Data.Hashable
 import qualified Data.HashMap.Lazy as H
 
 data VarName = VarName String deriving (Eq, Read)
 
 instance Show VarName where
   show (VarName v) = v
+
+instance Hashable VarName where
+  hash (VarName s) = hash s
+  hashWithSalt i (VarName s) = hashWithSalt i s
+
 
 mk_var :: String -> VarName
 mk_var = VarName
