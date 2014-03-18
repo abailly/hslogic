@@ -9,6 +9,7 @@ import qualified Data.HashMap.Lazy as H
 import Data.List(union,(\\))
 
 import Hslogic.Types
+import Hslogic.Parse
 
 class ContainsVars t where
   vars_in :: t -> [VarName]
@@ -21,7 +22,10 @@ instance ContainsVars Term where
   vars_in (Var v)     = [v]
   vars_in (Fn _ ts)   = vars_in ts
 
-
+instance ContainsVars Formula where
+  vars_in (T t) = vars_in t
+  vars_in (t :-> t') = vars_in t ++ vars_in t'
+  
 class Substitution s where
   lookup_var        :: s -> VarName -> Maybe Term
   emptySubstitution :: s
@@ -39,8 +43,8 @@ instance Substitution Subst where
 
 -- |Renames bound and free variables of a clause to fresh variables
 --
--- >>> fresh 1 (clause "foo(X) -: bar(Z), X, quux(Z), Y.")
--- (4,foo(X1) -: bar(X2), X1, quux(X2), X3.)
+-- >>> fresh 1 (clause "foo(X) :- bar(Z), X, quux(Z), Y.")
+-- (4,foo(X1) :- bar(X2), X1, quux(X2), X3.)
 fresh :: Int -> Clause -> (Int, Clause)
 fresh count (Clause ch cps) = let bound = vars_in ch
                                   free  = vars_in cps \\ bound
@@ -59,13 +63,16 @@ instance Substitutible Term where
     Just t  -> t
     Nothing -> Var n
   apply ss (Fn n ts) = Fn n (apply ss ts)
- 	
+
+instance Substitutible Formula where
+  apply ss (T t) = T $ apply ss t
+  apply ss (t :-> t') = apply ss t :-> apply ss t'
+    
 instance Substitutible a => Substitutible [a] where
   apply ss = map (apply ss)
 
 class Substitutible t => Unifiable t where
   unify :: Substitution s => t -> t -> Maybe s
-
 
 instance Unifiable a => Unifiable [a] where
   unify [] [] = Just emptySubstitution

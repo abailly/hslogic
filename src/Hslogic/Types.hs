@@ -30,8 +30,11 @@ data Clause
     clausePremises :: [Term]
     } deriving (Eq,Read)
 
+data Formula = T Term
+             | Term :-> Term
+               deriving (Eq,Read)
+  
 newtype Subst = Subst { substMap :: (H.HashMap VarName Term) } deriving Eq
-
 
 class PrettyPrintable a where
   pp :: a -> Doc
@@ -53,7 +56,7 @@ instance Show Term where
   
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
-  pp (Clause h (p:ps)) = pp h <> text " -: " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
+  pp (Clause h (p:ps)) = pp h <> text " :- " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
   
 instance Show Clause where
   show = show . pp
@@ -68,7 +71,7 @@ pretty :: Term -> Doc
 pretty t = pp t
 
 instance PrettyPrintable (VarName,Term) where
-  pp (k,v) = pp k <> text " -> " <> pp v
+  pp (k,v) = pp k <> text " → " <> pp v
   
 instance PrettyPrintable Subst where
   pp s = char '['
@@ -78,3 +81,9 @@ instance PrettyPrintable Subst where
 instance Show Subst where
   show = show . pp
   
+instance PrettyPrintable Formula where
+  pp (T t) = pp t
+  pp (t :-> t') = pp t <> text " ⇒ "<> pp t'
+
+instance Show Formula where
+  show = show . pp

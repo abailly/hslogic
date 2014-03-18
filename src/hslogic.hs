@@ -21,7 +21,6 @@ color c io = do
   liftIO $ setSGR []
   return a
 
-
 putStrLnPretty :: (PrettyPrintable a) => a -> IO ()
 putStrLnPretty = putStrLn . show . pp
 
@@ -32,7 +31,7 @@ displaySolution clauses (s:ss) = do
 displaySolution  _      _      = color Red $ liftIO $ putStrLn "??"
 
 trySolving :: Clauses -> String -> StateT CurrentState IO ()
-trySolving clauses s = case doParse termParser s of
+trySolving clauses s = case doParse formulaParser s of
       Left e  -> color Red $ liftIO (putStrLn e)
       Right t -> displaySolution clauses (solutions clauses [t])
 
@@ -52,7 +51,7 @@ loop = do
     "?"         -> color Green $ liftIO $ mapM_ putStrLnPretty clauses
     "exit"      -> liftIO $ color Green (putStrLn "Bye!") >> exitWith ExitSuccess
     ""          -> displaySolution clauses sol
-    ('?':'-':s) -> trySolving clauses s
+    ('?':'-':q) -> trySolving clauses q
     c           -> extendClauses clauses sol c
   loop
 
