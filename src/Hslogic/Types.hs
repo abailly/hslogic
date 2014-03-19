@@ -56,7 +56,7 @@ instance Show Term where
   
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
-  pp (Clause h (p:ps)) = pp h <> text " :- " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
+  pp (Clause h (p:ps)) = pp h <> text " <= " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
   
 instance Show Clause where
   show = show . pp
@@ -71,7 +71,7 @@ pretty :: Term -> Doc
 pretty t = pp t
 
 instance PrettyPrintable (VarName,Term) where
-  pp (k,v) = pp k <> text " → " <> pp v
+  pp (k,v) = pp k <> text " -> " <> pp v
   
 instance PrettyPrintable Subst where
   pp s = char '['
@@ -83,7 +83,7 @@ instance Show Subst where
   
 instance PrettyPrintable Formula where
   pp (T t) = pp t
-  pp (t :-> t') = pp t <> text " ⇒ "<> pp t'
+  pp (t :-> t') = pp t <> text " => "<> pp t'
 
 instance Show Formula where
   show = show . pp

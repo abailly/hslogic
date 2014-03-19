@@ -43,8 +43,8 @@ instance Substitution Subst where
 
 -- |Renames bound and free variables of a clause to fresh variables
 --
--- >>> fresh 1 (clause "foo(X) :- bar(Z), X, quux(Z), Y.")
--- (4,foo(X1) :- bar(X2), X1, quux(X2), X3.)
+-- >>> fresh 1 (clause "foo(X) <= bar(Z), X, quux(Z), Y.")
+-- (4,foo(X1) <= bar(X2), X1, quux(X2), X3.)
 fresh :: Int -> Clause -> (Int, Clause)
 fresh count (Clause ch cps) = let bound = vars_in ch
                                   free  = vars_in cps \\ bound
@@ -107,6 +107,6 @@ infixl 8 <->
 -- |Unify two unifiable terms 
 --
 -- >>>  (Fn "install" [ Var (VarName "X") ]) <-> Fn "install" [ Fn "check" [ Var (VarName "Y") ]]
--- Just [X → check(Y)]
+-- Just [X -> check(Y)]
 (<->) :: Term -> Term -> Maybe Subst
 a <-> b = unify a b

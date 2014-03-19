@@ -48,8 +48,8 @@ termParser = spaces >> (var <|> fun)
 
 -- |Parse a clause
 --
--- >>> parseTest clauseParser "foo(X) :- bar, qix(X)."
--- foo(X) :- bar, qix(X).
+-- >>> parseTest clauseParser "foo(X) <= bar, qix(X)."
+-- foo(X) <= bar, qix(X).
 clauseParser :: Parser Clause
 clauseParser = do
   h <- spaces >> termParser
@@ -58,13 +58,13 @@ clauseParser = do
   char '.' >> return (Clause h cls)
       where
       premises :: Parser [Term]
-      premises = string ":-" >> spaces >> (termParser `sepBy`
+      premises = string "<=" >> spaces >> (termParser `sepBy`
                                            (spaces >> char ',' >> spaces))
 
 -- |Parse a query formula
 --
 -- >>> parseTest formulaParser "foo(X) => bar(qix)"
--- foo(X) ⇒ bar(qix)
+-- foo(X) => bar(qix)
 -- >>> parseTest formulaParser "foo(X)"
 -- foo(X)
 -- >>> parseTest formulaParser "foo(foo)"

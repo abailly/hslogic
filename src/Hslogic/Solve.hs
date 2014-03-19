@@ -10,11 +10,11 @@ type Clauses = [ Clause ]
 
 -- | Select a clause s.t. its head unifies with the given Term
 --
--- >>> selectClause 1 (map clause ["foo(bar) :- qix.", "foo(X) :- baz (X)."]) (term "foo(foo)")
--- Just (2,[X1 → foo],[baz(foo)],[])
+-- >>> selectClause 1 (map clause ["foo(bar) <= qix.", "foo(X) <= baz (X)."]) (term "foo(foo)")
+-- Just (2,[X1 -> foo],[baz(foo)],[])
 --
--- >>> selectClause 1 (map clause ["foo(bar) :- qix.", "foo(X) :- baz (X)."]) (term "foo(X)")
--- Just (1,[X → bar],[qix],[foo(X) :- baz(X).])
+-- >>> selectClause 1 (map clause ["foo(bar) <= qix.", "foo(X) <= baz (X)."]) (term "foo(X)")
+-- Just (1,[X -> bar],[qix],[foo(X) <= baz(X).])
 --
 selectClause :: Int -> Clauses -> Term  -> Maybe (Int, Subst, [Term], Clauses)
 selectClause _ []     _       = Nothing
@@ -25,9 +25,9 @@ selectClause i (c:cs) t = let (i',c') = fresh i c
 
 sampleClauses :: Clauses
 sampleClauses = (map (fromRight . doParse clauseParser) [
-                    "foo(bar) :- qix.",
-                    "foo(baz) :- quux.",
-                    "foo(X)   :- baz (X).",
+                    "foo(bar) <= qix.",
+                    "foo(baz) <= quux.",
+                    "foo(X)   <= baz (X).",
                     "baz(quux).",
                     "qix."
                     ])
@@ -39,7 +39,7 @@ sampleClauses2 = (map (fromRight . doParse clauseParser) [
                     "took(sue,cs240).",
                     "took(bob,cs120).",
                     "took(bob,cs370).",
-                    "canGraduate(X) :- took(X,cs120), took(X,cs121), took(X,cs240), took(X,cs370)."
+                    "canGraduate(X) <= took(X,cs120), took(X,cs121), took(X,cs240), took(X,cs370)."
                     ])
 
 -- |Solves a list of terms (a query) providing a substitution for any variable occuring in it
@@ -47,7 +47,7 @@ sampleClauses2 = (map (fromRight . doParse clauseParser) [
 --
 -- We can produce all substitutions for variables occuring in the query:
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(X)"])
--- [[X → bar],[X1 → X,X → quux]]
+-- [[X -> bar],[X1 -> X,X -> quux]]
 --
 -- If not solvable, then empty list is returned:
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(qix)"])
@@ -55,7 +55,7 @@ sampleClauses2 = (map (fromRight . doParse clauseParser) [
 --
 -- Intermediate substitutions for variables not occuring in the query are stored
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(quux)"])
--- [[X1 → quux]]
+-- [[X1 -> quux]]
 --
 -- Ground terms that are known generate a list with a single empty substitution
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "qix"])
@@ -77,10 +77,10 @@ solve cs (i,s,(l :-> r):ts) = solve ((Clause l []):cs) (i,s,T r:ts)
 -- |Generate all solutions for given query against given clauses
 --
 -- >>> solutions sampleClauses (map formula ["foo(X)", "baz(Y)"])
--- [[Y → quux,X → bar],[Y → quux,X → quux]]
+-- [[Y -> quux,X -> bar],[Y -> quux,X -> quux]]
 --
 -- >>> solutions sampleClauses (map formula ["foo(X)", "baz(X)"])
--- [[X → quux]]
+-- [[X -> quux]]
 --
 -- Hypothetical reasoning with ground hypothesis:
 -- >>> solutions sampleClauses2 (map formula ["took(sue,cs370) => canGraduate(sue)"])
