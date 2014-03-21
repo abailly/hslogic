@@ -1,6 +1,6 @@
 { haskellPackages ? ( import <nixpkgs> {}).haskellPackages}:
 let
-  inherit (haskellPackages) cabal cabalInstall_1_18_0_2
+  inherit (haskellPackages) cabal
     doctest hashable monadsTf parsec tuple
  unorderedContainers utf8String ansiTerminal
  ; # Haskell dependencies here
@@ -15,6 +15,5 @@ in cabal.mkDerivation(self: {
  unorderedContainers utf8String ansiTerminal
  ];
 
-  buildTools = [ cabalInstall_1_18_0_2 ];
   enableSplitObjs = false;
 })
