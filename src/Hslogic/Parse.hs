@@ -68,11 +68,9 @@ clauseParser = do
 -- >>> parseTest formulaParser "foo(foo)"
 -- foo(foo)
 --
--- parse intuitionistic implication
 -- >>> parseTest formulaParser "foo(X) => bar(qix)"
 -- foo(X) => bar(qix)
 --
--- parse linear implication
 -- >>> parseTest formulaParser "foo(foo) -o bar(baz)"
 -- foo(foo) -o bar(baz)
 formulaParser :: Parser Formula

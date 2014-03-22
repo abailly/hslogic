@@ -46,19 +46,15 @@ sampleClauses2 = (map (fromRight . doParse clauseParser) [
 -- |Solves a list of terms (a query) providing a substitution for any variable occuring in it
 -- if it succeeds.
 --
--- We can produce all substitutions for variables occuring in the query:
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(X)"])
 -- [[X -> bar],[X1 -> X,X -> quux]]
 --
--- If not solvable, then empty list is returned:
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(qix)"])
 -- []
 --
--- Intermediate substitutions for variables not occuring in the query are stored
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "foo(quux)"])
 -- [[X1 -> quux]]
 --
--- Ground terms that are known generate a list with a single empty substitution
 -- >>> map sel2 $ catMaybes $ solve sampleClauses (1,emptySubstitution, [formula "qix"])
 -- [[]]
 solve :: Clauses -> (Int, Subst, [Formula]) -> [Maybe (Int, Subst, [Formula])]
@@ -83,7 +79,6 @@ solve cs (i,s,(l :-> r):ts) = solve ((Clause l []):cs) (i,s,T r:ts)
 -- >>> solutions sampleClauses (map formula ["foo(X)", "baz(X)"])
 -- [[X -> quux]]
 --
--- Hypothetical reasoning with ground hypothesis:
 -- >>> solutions sampleClauses2 (map formula ["took(sue,cs370) => canGraduate(sue)"])
 -- [[]]
 solutions :: Clauses -> [Formula] -> [Subst]
