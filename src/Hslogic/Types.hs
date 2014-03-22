@@ -31,7 +31,8 @@ data Clause
     } deriving (Eq,Read)
 
 data Formula = T Term
-             | Term :-> Term
+             | Term :-> Term  -- ^Intuitionistic implication, hypothesis maybe used zero or more times to prove consequence
+             | Term :-@ Term -- ^Linear implication, hypothesis must be used one and only one time to prove consequence
                deriving (Eq,Read)
   
 newtype Subst = Subst { substMap :: (H.HashMap VarName Term) } deriving Eq
@@ -84,6 +85,7 @@ instance Show Subst where
 instance PrettyPrintable Formula where
   pp (T t) = pp t
   pp (t :-> t') = pp t <> text " => "<> pp t'
+  pp (t :-@ t') = pp t <> text " -o "<> pp t'
 
 instance Show Formula where
   show = show . pp

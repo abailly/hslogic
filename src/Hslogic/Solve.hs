@@ -8,7 +8,7 @@ import Hslogic.Parse
 
 type Clauses = [ Clause ]
 
--- | Select a clause s.t. its head unifies with the given Term
+-- | Select a clause s.t. its head unifies with the given Term.
 --
 -- >>> selectClause 1 (map clause ["foo(bar) <= qix.", "foo(X) <= baz (X)."]) (term "foo(foo)")
 -- Just (2,[X1 -> foo],[baz(foo)],[])
@@ -41,6 +41,7 @@ sampleClauses2 = (map (fromRight . doParse clauseParser) [
                     "took(bob,cs370).",
                     "canGraduate(X) <= took(X,cs120), took(X,cs121), took(X,cs240), took(X,cs370)."
                     ])
+
 
 -- |Solves a list of terms (a query) providing a substitution for any variable occuring in it
 -- if it succeeds.

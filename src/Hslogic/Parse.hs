@@ -63,22 +63,28 @@ clauseParser = do
 
 -- |Parse a query formula
 --
--- >>> parseTest formulaParser "foo(X) => bar(qix)"
--- foo(X) => bar(qix)
 -- >>> parseTest formulaParser "foo(X)"
 -- foo(X)
 -- >>> parseTest formulaParser "foo(foo)"
 -- foo(foo)
+--
+-- parse intuitionistic implication
+-- >>> parseTest formulaParser "foo(X) => bar(qix)"
+-- foo(X) => bar(qix)
+--
+-- parse linear implication
+-- >>> parseTest formulaParser "foo(foo) -o bar(baz)"
+-- foo(foo) -o bar(baz)
 formulaParser :: Parser Formula
 formulaParser = do
-  t <- spaces >> termParser
-  consequence <-  optionMaybe consequentParser
-  case consequence of
-    Just t' -> return $ t :-> t'
-    Nothing -> return $ T t
+  t <- spaces >> termParser 
+  spaces >> option (T t) (consequentParser t  <|> linearImplicationParser t)
 
-consequentParser :: Parser Term
-consequentParser = spaces >> string "=>" >> spaces >> termParser
+linearImplicationParser :: Term -> Parser Formula
+linearImplicationParser t = string "-o" >> spaces >> termParser >>= return . (t :-@)
+
+consequentParser :: Term -> Parser Formula
+consequentParser t = string "=>" >> spaces >> termParser >>= return . (t :->)
       
 fromRight :: Either a b -> b
 fromRight (Right b) = b
