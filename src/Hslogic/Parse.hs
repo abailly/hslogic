@@ -73,16 +73,20 @@ clauseParser = do
 --
 -- >>> parseTest formulaParser "foo(foo) -o bar(baz)"
 -- foo(foo) -o bar(baz)
+--
 formulaParser :: Parser Formula
 formulaParser = do
   t <- spaces >> termParser 
-  spaces >> option (T t) (consequentParser t  <|> linearImplicationParser t)
+  spaces >> option (T t) (consequentParser t  <|> linearImplicationParser t <|> multConjunctionParser t)
 
 linearImplicationParser :: Term -> Parser Formula
-linearImplicationParser t = string "-o" >> spaces >> termParser >>= return . (t :-@)
+linearImplicationParser t = string "-o" >> spaces >> formulaParser >>= return . (t :-@)
 
 consequentParser :: Term -> Parser Formula
-consequentParser t = string "=>" >> spaces >> termParser >>= return . (t :->)
+consequentParser t = string "=>" >> spaces >> formulaParser >>= return . (t :->)
+      
+multConjunctionParser :: Term -> Parser Formula
+multConjunctionParser t = string "," >> spaces >> formulaParser >>= return . (t :*)
       
 fromRight :: Either a b -> b
 fromRight (Right b) = b
