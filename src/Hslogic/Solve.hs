@@ -1,8 +1,12 @@
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE DoAndIfThenElse #-}
 module Hslogic.Solve where
 
 import Data.List
-import Data.Tuple.Select
-import Data.Maybe
+import Data.Functor.Identity
+import "mtl" Control.Monad.State
 import Hslogic.Types
 import Hslogic.Unify
 import Hslogic.Parse
@@ -78,50 +82,77 @@ cakes = mkClauses [
   ]
 
 data Logic = Intuitionistic | Linear deriving (Eq, Show)
+
+type Trace = [ String ]
+
+data Context = Context {
+  ctxLogic :: Logic
+  , ctxClauses :: Clauses
+  , ctxTrace :: Trace
+ }
+
+addTrace :: String -> Context -> Context
+addTrace trace c@(Context { ctxTrace })  = c { ctxTrace = trace : ctxTrace}
   
+newtype SolverT m a = Solver { runSolver :: StateT Context m a }
+                   deriving (Functor, Monad, MonadState Context)
+
+type Solver a = SolverT Identity a
+
+
 -- |Solves a list of terms (a query) providing a substitution for any variable occuring in it
 -- if it succeeds.
 --
--- >>> map goalSubstitution $ filter (/= EmptyGoal) $ solve Intuitionistic sampleClauses (Goal 1 emptySubstitution [formula "foo(X)"] [])
--- [[X -> bar],[X1 -> X,X -> quux]]
---
--- >>> map goalSubstitution $ filter (/= EmptyGoal) $ solve Intuitionistic sampleClauses (Goal 1 emptySubstitution [formula "foo(qix)"] [])
--- []
---
--- >>> map goalSubstitution $ filter (/= EmptyGoal) $ solve Intuitionistic sampleClauses (Goal 1 emptySubstitution [formula "foo(quux)"] [])
--- [[X1 -> quux]]
---
--- >>> map goalSubstitution $ filter (/= EmptyGoal) $ solve Intuitionistic sampleClauses (Goal 1 emptySubstitution [formula "qix"] [])
--- [[]]
--- >>> filter (/= EmptyGoal) $ solve Linear cakes (Goal 1 emptySubstitution [formula "cake -o have(cake),eat(cake)"] [])
--- []
-solve :: Logic -> Clauses -> Goal -> [Goal]
-solve _ _  c@(Goal _ _ [] _)       = [c]
-solve _ []  _                      = [EmptyGoal]
-solve _ cs (Goal i s ((l :-> f):ts) us)
-                                   = solve Intuitionistic ((Clause l []):cs) (Goal i s (f:ts) us)
-solve _ cs (Goal i s ((l :-@ f):ts) us)
-                                   = solve Linear         ((Clause l []):cs) (Goal i s (f:ts) us)
-solve Intuitionistic cs (Goal i s ((l :* f):ts) us)
-                                   = concat [ solve Intuitionistic cs (Goal i' s' (f:ts') us) | (Goal i' s' ts' _) <- solve Intuitionistic cs (Goal i s (T l:ts) us) ]
-solve Linear cs (Goal i s ((l :* f):ts) us)  =  concat [ solve Linear (cs \\ us') (Goal i' s' (f:ts') us) | (Goal i' s' ts' us') <- solve Linear cs (Goal i s (T l:ts) us) ]
-solve Intuitionistic cs (Goal i s terms@(T t:ts) us) =
+solve :: Goal -> Solver [Goal]
+-- end case : no more goals so success
+solve g@(Goal _ s [] _)       = do
+  modify (addTrace $ "success: " ++ show s) 
+  return [g]
+solve EmptyGoal       = do 
+  modify (addTrace $ "failure") 
+  return [EmptyGoal]
+-- base case
+solve goal = do
+  c@(Context _ cs _) <- get
+  if cs == [] then
+    return [EmptyGoal]
+  else
+    solve' c goal
+
+solve' :: Context -> Goal -> Solver [Goal]
+
+solve' (Context _ cs traces) (Goal i s (e@(l :-> f):ts) us) =
+  put (Context Intuitionistic ((Clause l []):cs) (("implication: " ++ show e) : traces)) >> solve (Goal i s (f:ts) us)
+
+solve' (Context _ cs traces) (Goal i s (e@(l :-@ f):ts) us)  =
+  put (Context Linear         ((Clause l []):cs) (("implication: " ++ show e): traces))  >> solve (Goal i s (f:ts) us)
+
+solve' (Context Intuitionistic cs traces) (Goal i s (e@(l :* f):ts) us)  =
+  (put (Context Intuitionistic cs (("left conjunction: " ++ show e) : traces)) >> solve (Goal i s (T l:ts) us)) >>=
+  (\ gs -> mapM ( \ (Goal i' s' ts' _) ->  put (Context Intuitionistic cs (("right conjunction: " ++ show e) : traces)) >> solve (Goal i' s' (f:ts') us)) (filter (/= EmptyGoal) gs)) >>= return . concat
+
+solve' (Context Linear cs traces)  (Goal i s (e@(l :* f):ts) us) =
+  (put (Context Linear cs (("left tensor: " ++ show e) : traces)) >> solve (Goal i s (T l:ts) us)) >>=
+  (\ gs -> mapM ( \ (Goal i' s' ts' us') ->  put (Context Linear (cs \\ us') (("right tensor: " ++ show e) : traces)) >> solve (Goal i' s' (f:ts') us)) (filter (/= EmptyGoal) gs)) >>= return . concat
+
+solve' (Context Intuitionistic cs traces)  (Goal i s terms@(T t:ts) us)=
   case selectClause i cs t of
     Just (Goal i' s' ts' [u],cs') -> let s''= s `extend_with` s'
-                                       in
-                                        solve Intuitionistic cs (Goal i' s'' (ts' ++ map (s'' `apply`) ts) (u:us))
-                                        ++
-                                        solve Intuitionistic cs' (Goal i' s terms us)
-    Nothing               -> [ EmptyGoal ]
-solve Linear cs (Goal i s terms@(T t:ts) us) =
+                                     in do
+                                       a <- (put (Context Intuitionistic cs (("int. term: "++ show t) : traces)) >> solve (Goal i' s'' (ts' ++ map (s'' `apply`) ts) (u:us)))
+                                       b <- (put (Context Intuitionistic cs' (("int. term (bktrack): "++ show t) : traces)) >>solve (Goal i' s terms us))
+                                       return $ a ++ b
+    _                    ->  return [ EmptyGoal ]
+
+solve'(Context Linear cs traces) (Goal i s terms@(T t:ts) us) =
   case selectClause i (cs \\ us) t of
     Just (Goal i' s' ts' [u],cs') -> let s''= s `extend_with` s'
-                                     in
-                                      solve Linear (cs \\ (u:us)) (Goal i' s'' (ts' ++ map (s'' `apply`) ts) (u:us))
-                                      ++
-                                      solve Linear cs' (Goal i' s terms us)
-    Nothing               -> [ EmptyGoal ]
-
+                                     in do
+                                       a <- (put (Context Linear (cs \\ (u:us)) (("lin. term " ++ show t) : traces)) >> solve (Goal i' s'' (ts' ++ map (s'' `apply`) ts) (u:us)))
+                                       b <- (put (Context Linear cs' (("lin. term (bktrack)" ++ show t) : traces)) >> solve (Goal i' s terms us))
+                                       return $ a ++ b
+    _              -> return [ EmptyGoal ]
+solve' _ _ = return []
 
 -- |Generate all solutions for given query against given clauses.
 --
@@ -140,4 +171,5 @@ solve Linear cs (Goal i s terms@(T t:ts) us) =
 -- [[]]
 solutions :: Clauses -> [Formula] -> [Subst]
 solutions cs ts = let vars = vars_in ts
-                  in  map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) (solve Intuitionistic cs (Goal 1 emptySubstitution ts [])))
+                      sols = evalState (runSolver (solve (Goal 1 emptySubstitution ts []))) (Context Intuitionistic cs [])
+                  in  map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) sols)
