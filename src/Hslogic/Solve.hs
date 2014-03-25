@@ -140,7 +140,7 @@ solve' (Context Intuitionistic cs traces)  (Goal i s terms@(T t:ts) us)=
     Just (Goal i' s' ts' [u],cs') -> let s''= s `extend_with` s'
                                      in do
                                        a <- (put (Context Intuitionistic cs (("int. term: "++ show t) : traces)) >> solve (Goal i' s'' (ts' ++ map (s'' `apply`) ts) (u:us)))
-                                       b <- (put (Context Intuitionistic cs' (("int. term (bktrack): "++ show t) : traces)) >>solve (Goal i' s terms us))
+                                       b <- (put (Context Intuitionistic cs' (("int. term (bktrack): "++ show t) : traces)) >> solve (Goal i' s terms us))
                                        return $ a ++ b
     _                    ->  return [ EmptyGoal ]
 
@@ -169,7 +169,8 @@ solve' _ _ = return []
 -- []
 -- >>> solutions cakes (map formula ["cake => have(cake), eat(cake)"])
 -- [[]]
-solutions :: Clauses -> [Formula] -> [Subst]
-solutions cs ts = let vars = vars_in ts
-                      sols = evalState (runSolver (solve (Goal 1 emptySubstitution ts []))) (Context Intuitionistic cs [])
-                  in  map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) sols)
+solutions :: Clauses -> [Formula] -> Solver [Subst]
+solutions cs ts = do
+  let vars = vars_in ts
+  sols <- solve (Goal 1 emptySubstitution ts [])
+  return $ map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) sols) 

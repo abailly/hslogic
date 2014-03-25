@@ -1,8 +1,9 @@
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE DoAndIfThenElse #-}
 module Main(main) where
 
 import Prelude hiding(getLine,putStr,putStrLn)
-import Control.Monad.State
+import "mtl" Control.Monad.State
 import System.IO.UTF8
 import System.IO(stdout,hSetBuffering,BufferMode(..))
 import System.Console.ANSI
@@ -33,7 +34,8 @@ displaySolution  _      _      = color Red $ liftIO $ putStrLn "??"
 trySolving :: Clauses -> String -> StateT CurrentState IO ()
 trySolving clauses s = case doParse formulaParser s of
       Left e  -> color Red $ liftIO (putStrLn e)
-      Right t -> displaySolution clauses (solutions clauses [t])
+      Right t -> let (sols,ctx) = runState (runSolver (solutions clauses [t])) (Context Intuitionistic clauses [])
+                 in displaySolution clauses sols >> liftIO (putStrLn $ show (ctxTrace ctx))
 
 extendClauses :: Clauses -> [Subst] -> String -> StateT CurrentState IO ()
 extendClauses clauses sol c = do
