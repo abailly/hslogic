@@ -1,16 +1,18 @@
-{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE DoAndIfThenElse     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main(main) where
 
-import Prelude hiding(getLine,putStr,putStrLn)
-import Control.Monad.State
-import System.IO.UTF8
-import System.IO(stdout,hSetBuffering,BufferMode(..))
-import System.Console.ANSI
-import System.Exit
+import           Control.Exception
+import           Control.Monad.State
+import           Prelude             hiding (getLine, putStr, putStrLn)
+import           System.Console.ANSI
+import           System.Exit
+import           System.IO           (BufferMode (..), hSetBuffering, stdout)
+import           System.IO.UTF8
 
-import Hslogic.Types
-import Hslogic.Parse
-import Hslogic.Solve
+import           Hslogic.Parse
+import           Hslogic.Solve
+import           Hslogic.Types
 
 data CurrentState = C [Clause] [Subst]
 
@@ -41,12 +43,12 @@ extendClauses clauses sol c = do
         Left e  -> color Red $ liftIO (putStrLn e) >> return clauses
         Right v -> return $ clauses ++ [v]
       put $ C clauses' sol
-      
+
 loop :: StateT CurrentState IO ()
 loop = do
-  C clauses sol <- get 
+  C clauses sol <- get
   liftIO $ putStr "> "
-  l <- liftIO $ catch getLine (\ _ -> exitWith ExitSuccess)
+  l <- liftIO $ catch getLine (\ (_ :: IOException) -> exitWith ExitSuccess)
   case l of
     "?"         -> color Green $ liftIO $ mapM_ putStrLnPretty clauses
     "exit"      -> liftIO $ color Green (putStrLn "Bye!") >> exitWith ExitSuccess

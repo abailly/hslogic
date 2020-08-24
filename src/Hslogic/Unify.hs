@@ -1,15 +1,15 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- |Basic unification essentially copied verbatim from http://pragprog.com/magazines/2013-06/unification
 module Hslogic.Unify where
 
 import qualified Data.HashMap.Lazy as H
 
-import Data.List(union,(\\))
+import           Data.List         (union, (\\))
 
-import Hslogic.Types
-import Hslogic.Parse
+import           Hslogic.Parse
+import           Hslogic.Types
 
 class ContainsVars t where
   vars_in :: t -> [VarName]
@@ -19,13 +19,13 @@ instance ContainsVars a => ContainsVars [a] where
   vars_in xs = foldl union [] [ vars_in x | x <- xs ]
 
 instance ContainsVars Term where
-  vars_in (Var v)     = [v]
-  vars_in (Fn _ ts)   = vars_in ts
+  vars_in (Var v)   = [v]
+  vars_in (Fn _ ts) = vars_in ts
 
 instance ContainsVars Formula where
-  vars_in (T t) = vars_in t
+  vars_in (T t)      = vars_in t
   vars_in (t :-> t') = vars_in t ++ vars_in t'
-  
+
 class Substitution s where
   lookup_var        :: s -> VarName -> Maybe Term
   emptySubstitution :: s
@@ -53,7 +53,7 @@ fresh count (Clause ch cps) = let bound = vars_in ch
                                   mapping   = zipWith (+->) (bound ++ free) freshvars :: [Subst]
                                   subst     = foldl extend_with emptySubstitution mapping
                               in  (count', Clause (subst `apply` ch) (map (subst `apply`) cps))
-  
+
 class Substitutible t where
   apply :: Substitution s => s -> t -> t
 
@@ -65,9 +65,9 @@ instance Substitutible Term where
   apply ss (Fn n ts) = Fn n (apply ss ts)
 
 instance Substitutible Formula where
-  apply ss (T t) = T $ apply ss t
+  apply ss (T t)      = T $ apply ss t
   apply ss (t :-> t') = apply ss t :-> apply ss t'
-    
+
 instance Substitutible a => Substitutible [a] where
   apply ss = map (apply ss)
 
@@ -104,9 +104,9 @@ instance Unifiable Term where
 
 infixl 8 <->
 
--- |Unify two unifiable terms 
+-- |Unify two unifiable terms
 --
 -- >>>  (Fn "install" [ Var (VarName "X") ]) <-> Fn "install" [ Fn "check" [ Var (VarName "Y") ]]
 -- Just [X -> check(Y)]
 (<->) :: Term -> Term -> Maybe Subst
-a <-> b = unify a b
+(<->) = unify
