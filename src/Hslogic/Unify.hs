@@ -25,7 +25,9 @@ instance ContainsVars Term where
 instance ContainsVars Formula where
   vars_in (T t)      = vars_in t
   vars_in (t :-> t') = vars_in t ++ vars_in t'
-
+  vars_in (t :-@ t') = vars_in t ++ vars_in t'
+  vars_in (t :* t')  = vars_in t ++ vars_in t'
+  
 class Substitution s where
   lookup_var        :: s -> VarName -> Maybe Term
   emptySubstitution :: s
@@ -67,6 +69,9 @@ instance Substitutible Term where
 instance Substitutible Formula where
   apply ss (T t)      = T $ apply ss t
   apply ss (t :-> t') = apply ss t :-> apply ss t'
+  apply ss (t :-@ t') = apply ss t :-@ apply ss t'
+  apply ss (t :* t')  = apply ss t :* apply ss t'
+    
 
 instance Substitutible a => Substitutible [a] where
   apply ss = map (apply ss)

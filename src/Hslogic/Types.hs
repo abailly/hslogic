@@ -30,8 +30,13 @@ data Clause
     clausePremises :: [Term]
     } deriving (Eq,Read)
 
+-- | The set of valid goals
+--
+-- Formulas are (currently) distinct from clauses but they should probably be one and the same
 data Formula = T Term
-             | Term :-> Term
+             | Term :-> Formula  -- ^Intuitionistic implication, hypothesis maybe used zero or more times to prove consequence
+             | Term :-@ Formula  -- ^Linear implication, hypothesis must be used one and only one time to prove consequence
+             | Term :* Formula      -- ^Multiplicative conjunction (in linear context) or more simply conjunction (in intuitionistic context)
                deriving (Eq,Read)
   
 newtype Subst = Subst { substMap :: (H.HashMap VarName Term) } deriving Eq
@@ -84,6 +89,8 @@ instance Show Subst where
 instance PrettyPrintable Formula where
   pp (T t) = pp t
   pp (t :-> t') = pp t <> text " => "<> pp t'
+  pp (t :-@ t') = pp t <> text " -o "<> pp t'
+  pp (t :*  t') = pp t <> text " , " <> pp t'
 
 instance Show Formula where
   show = show . pp
