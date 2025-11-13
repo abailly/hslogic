@@ -1,23 +1,22 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Hslogic.Types where
 
-import Text.PrettyPrint((<>), hcat, text, Doc, char,punctuate)
-import Data.Hashable
-import qualified Data.HashMap.Lazy as H
+import Text.PrettyPrint(hcat, text, Doc, char,punctuate)
+import qualified Data.Map as H
+import Data.Map (Map)
+import Data.String (IsString (..))
 
-data VarName = VarName String deriving (Eq, Read)
+newtype VarName = VarName String
+ deriving newtype (Eq, Ord, Read)
 
 instance Show VarName where
-  show (VarName v) = v
+  show (VarName s) = s
 
-instance Hashable VarName where
-  hash (VarName s) = hash s
-  hashWithSalt i (VarName s) = hashWithSalt i s
-
-
-mk_var :: String -> VarName
-mk_var = VarName
+instance IsString VarName where
+  fromString = VarName
 
 data Term
   = Var VarName
@@ -38,8 +37,8 @@ data Formula = T Term
              | Term :-@ Formula  -- ^Linear implication, hypothesis must be used one and only one time to prove consequence
              | Term :* Formula      -- ^Multiplicative conjunction (in linear context) or more simply conjunction (in intuitionistic context)
                deriving (Eq,Read)
-  
-newtype Subst = Subst { substMap :: (H.HashMap VarName Term) } deriving Eq
+
+newtype Subst = Subst { substMap :: Map VarName Term } deriving Eq
 
 class PrettyPrintable a where
   pp :: a -> Doc
@@ -58,26 +57,22 @@ instance PrettyPrintable Term where
 
 instance Show Term where
   show = show . pp
-  
+
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
   pp (Clause h (p:ps)) = pp h <> text " <= " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
-  
+
 instance Show Clause where
   show = show . pp
 
 -- |Pretty print a term
 --
--- >>> pretty (Fn "install" [ Var (VarName "X") ])
--- install(X)
--- >>> pretty (Fn "copy" [])
--- copy
 pretty :: Term -> Doc
-pretty t = pp t
+pretty = pp
 
 instance PrettyPrintable (VarName,Term) where
   pp (k,v) = pp k <> text " -> " <> pp v
-  
+
 instance PrettyPrintable Subst where
   pp s = char '['
        <> hcat (punctuate (char ',') (map pp (H.toList $ substMap s)))
@@ -85,7 +80,7 @@ instance PrettyPrintable Subst where
 
 instance Show Subst where
   show = show . pp
-  
+
 instance PrettyPrintable Formula where
   pp (T t) = pp t
   pp (t :-> t') = pp t <> text " => "<> pp t'

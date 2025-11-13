@@ -1,0 +1,7 @@
+module Hslogic.TypesSpec where
+
+spec :: Spec
+spec =
+  it "pretty-prints a term" $
+    pretty (Fn "install" [ Var (VarName "X") ]) `shouldBe` "install(X)"
+    pretty (Fn "copy" []) `shouldBe` copy

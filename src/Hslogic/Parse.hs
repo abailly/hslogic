@@ -1,10 +1,11 @@
 module Hslogic.Parse where
+
 import Hslogic.Types
 import Text.ParserCombinators.Parsec
 
 doParse :: Parser a -> String -> Either String a
 doParse p input = case parse p "" input of
-  Left e  -> Left $ show e
+  Left e -> Left $ show e
   Right v -> Right v
 
 -- | Parse a single variable
@@ -30,14 +31,16 @@ fun = do
   i <- lower
   s <- many alphaNum
   args <- spaces >> (funArgs <|> return [])
-  return $ Fn (i:s) args
+  return $ Fn (i : s) args
   where
-    funArgs :: Parser [ Term ]
-    funArgs = between (char '(' >> spaces)
-                      (spaces >> char ')')
-                      (termParser `sepBy`
-                       (spaces >> char ',' >> spaces)) 
-
+    funArgs :: Parser [Term]
+    funArgs =
+      between
+        (char '(' >> spaces)
+        (spaces >> char ')')
+        ( termParser
+            `sepBy` (spaces >> char ',' >> spaces)
+        )
 
 -- | Parse a term.
 --
@@ -46,53 +49,55 @@ fun = do
 termParser :: Parser Term
 termParser = spaces >> (var <|> fun)
 
--- |Parse a clause
+-- | Parse a clause
 --
--- >>> parseTest clauseParser "foo(X) <= bar, qix(X)."
--- foo(X) <= bar, qix(X).
+--  >>> parseTest clauseParser "foo(X) <= bar, qix(X)."
+--  foo(X) <= bar, qix(X).
 clauseParser :: Parser Clause
 clauseParser = do
   h <- spaces >> termParser
   spaces
   cls <- premises <|> return []
   char '.' >> return (Clause h cls)
-      where
-      premises :: Parser [Term]
-      premises = string "<=" >> spaces >> (termParser `sepBy`
-                                           (spaces >> char ',' >> spaces))
+  where
+    premises :: Parser [Term]
+    premises =
+      string "<="
+        >> spaces
+        >> ( termParser
+               `sepBy` (spaces >> char ',' >> spaces)
+           )
 
--- |Parse a query formula
+-- | Parse a query formula
 --
--- >>> parseTest formulaParser "foo(X)"
--- foo(X)
--- >>> parseTest formulaParser "foo(foo)"
--- foo(foo)
+--  >>> parseTest formulaParser "foo(X)"
+--  foo(X)
+--  >>> parseTest formulaParser "foo(foo)"
+--  foo(foo)
 --
--- >>> parseTest formulaParser "foo(X) => bar(qix)"
--- foo(X) => bar(qix)
+--  >>> parseTest formulaParser "foo(X) => bar(qix)"
+--  foo(X) => bar(qix)
 --
--- >>> parseTest formulaParser "foo(foo) -o bar(baz)"
--- foo(foo) -o bar(baz)
---
+--  >>> parseTest formulaParser "foo(foo) -o bar(baz)"
+--  foo(foo) -o bar(baz)
 formulaParser :: Parser Formula
 formulaParser = do
-  t <- spaces >> termParser 
-  spaces >> option (T t) (consequentParser t  <|> linearImplicationParser t <|> multConjunctionParser t)
+  t <- spaces >> termParser
+  spaces >> option (T t) (consequentParser t <|> linearImplicationParser t <|> multConjunctionParser t)
 
 linearImplicationParser :: Term -> Parser Formula
 linearImplicationParser t = string "-o" >> spaces >> formulaParser >>= return . (t :-@)
 
 consequentParser :: Term -> Parser Formula
 consequentParser t = string "=>" >> spaces >> formulaParser >>= return . (t :->)
-      
+
 multConjunctionParser :: Term -> Parser Formula
 multConjunctionParser t = string "," >> spaces >> formulaParser >>= return . (t :*)
-      
+
 fromRight :: Either a b -> b
 fromRight (Right b) = b
-fromRight _         = error "fromRight must only be used on a Right either..."
+fromRight _ = error "fromRight must only be used on a Right either..."
 
-  
 term :: String -> Term
 term = fromRight . doParse termParser
 
