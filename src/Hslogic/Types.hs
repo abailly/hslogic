@@ -8,6 +8,7 @@ import Text.PrettyPrint(hcat, text, Doc, char,punctuate)
 import qualified Data.Map as H
 import Data.Map (Map)
 import Data.String (IsString (..))
+import qualified Data.Map as Map
 
 newtype VarName = VarName String
  deriving newtype (Eq, Ord, Read)
@@ -35,10 +36,14 @@ data Clause
 data Formula = T Term
              | Term :-> Formula  -- ^Intuitionistic implication, hypothesis maybe used zero or more times to prove consequence
              | Term :-@ Formula  -- ^Linear implication, hypothesis must be used one and only one time to prove consequence
-             | Term :* Formula      -- ^Multiplicative conjunction (in linear context) or more simply conjunction (in intuitionistic context)
+             | Term :* Formula   -- ^Multiplicative conjunction (in linear context) or more simply conjunction (in intuitionistic context)
                deriving (Eq,Read)
 
-newtype Subst = Subst { substMap :: Map VarName Term } deriving Eq
+newtype Subst = Subst { substMap :: Map VarName Term }
+  deriving Eq
+
+toList :: Subst -> [(VarName, Term)]
+toList (Subst m) = Map.toList m
 
 class PrettyPrintable a where
   pp :: a -> Doc
