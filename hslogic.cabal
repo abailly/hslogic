@@ -18,7 +18,8 @@ Library
                       tuple,
                       mtl,
                       transformers,
-                      ansi-terminal
+                      ansi-terminal,
+                      QuickCheck
   exposed-modules:    Hslogic.Types,
                       Hslogic.Parse,
                       Hslogic.Solve,
@@ -46,13 +47,13 @@ Executable hslogic
 Test-Suite hslogic-test
     type:             exitcode-stdio-1.0
     main-is:          Spec.hs
-    other-modules:    Hslogic.TypesSpec
+    other-modules:    Hslogic.TypesSpec,
+                      Hslogic.ParseSpec
     hs-source-dirs:   test
-    main-is:          hslogic-test.hs
     build-depends:    base,
-                      doctest,
                       directory,
                       hslogic,
                       hspec,
-                      mtl
+                      mtl,
+                      QuickCheck
     build-tool-depends: hspec-discover:hspec-discover

@@ -10,8 +10,6 @@ doParse p input = case parse p "" input of
 
 -- | Parse a single variable
 --
--- >>> parseTest var "X"
--- X
 var :: Parser Term
 var = do
   i <- upper
@@ -20,12 +18,6 @@ var = do
 
 -- | Parse a predicate/function.
 --
--- >>> parseTest fun "foo"
--- foo
--- >>> parseTest fun "foo(X)"
--- foo(X)
--- >>> parseTest fun "foo ( Xj, ll )"
--- foo(Xj,ll)
 fun :: Parser Term
 fun = do
   i <- lower
@@ -43,16 +35,10 @@ fun = do
         )
 
 -- | Parse a term.
---
--- >>> parseTest termParser " foo"
--- foo
 termParser :: Parser Term
 termParser = spaces >> (var <|> fun)
 
 -- | Parse a clause
---
---  >>> parseTest clauseParser "foo(X) <= bar, qix(X)."
---  foo(X) <= bar, qix(X).
 clauseParser :: Parser Clause
 clauseParser = do
   h <- spaces >> termParser
@@ -70,16 +56,6 @@ clauseParser = do
 
 -- | Parse a query formula
 --
---  >>> parseTest formulaParser "foo(X)"
---  foo(X)
---  >>> parseTest formulaParser "foo(foo)"
---  foo(foo)
---
---  >>> parseTest formulaParser "foo(X) => bar(qix)"
---  foo(X) => bar(qix)
---
---  >>> parseTest formulaParser "foo(foo) -o bar(baz)"
---  foo(foo) -o bar(baz)
 formulaParser :: Parser Formula
 formulaParser = do
   t <- spaces >> termParser
