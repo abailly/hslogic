@@ -23,25 +23,17 @@ Library
   exposed-modules:    Hslogic.Types,
                       Hslogic.Parse,
                       Hslogic.Solve,
-                      Hslogic.Unify
+                      Hslogic.Unify,
+                      Hslogic.Run
+
   hs-source-dirs:     src
   ghc-options:        -Wall
 
 Executable hslogic
   build-depends:      base,
-                      pretty,
-                      containers,
-                      unordered-containers,
-                      hashable,
-                      utf8-string,
-                      parsec,
-                      tuple,
-                      mtl,
-                      transformers,
-                      ansi-terminal,
                       hslogic
   main-is:            hslogic.hs
-  hs-source-dirs:     src
+  hs-source-dirs:     app
   ghc-options:        -Wall
 
 Test-Suite hslogic-test

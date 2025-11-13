@@ -82,7 +82,7 @@ instance Deep Formula where
     t :* t' -> deep t `max` deep t'
 
 instance Arbitrary Formula where
-  arbitrary = genFormula 10
+  arbitrary = genFormula 6
 
 genFormula :: Int -> Gen Formula
 genFormula 0 = T <$> genTerm 3

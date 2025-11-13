@@ -46,7 +46,6 @@ data Goal
 -- and the clause's premises with inferred substitution applied. It also returns the remaining list of clauses
 -- not applied, and the prefix of clauses skipped. eg. it returns the list of clauses split in half with the
 -- selected clause removed.
---
 selectClause :: Int -> Clauses -> Term -> Maybe (Goal, Clauses)
 selectClause _ [] _ = Nothing
 selectClause i (c : cs) t =
@@ -161,9 +160,10 @@ solve' _ _ = return []
 
 -- | Generate all solutions for given query against given clauses.
 solutions :: Clauses -> [Formula] -> [Subst]
-solutions cs ts = runIdentity $ evalStateT (runSolver solver) (contextWith cs)
-  where
-    solver = do
-      let vars = vars_in ts
-      sols <- solve (Goal 1 emptySubstitution ts [])
-      return $ map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) sols)
+solutions cs ts = runIdentity $ evalStateT (runSolver $ solver ts) (contextWith cs)
+
+solver :: [Formula] -> Solver [Subst]
+solver ts = do
+  let vars = vars_in ts
+  sols <- solve (Goal 1 emptySubstitution ts [])
+  return $ map ((-/- vars) . goalSubstitution) (filter (/= EmptyGoal) sols)

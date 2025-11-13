@@ -1,16 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main (main) where
+module Hslogic.Run where
 
-import Control.Exception
-import Control.Monad.State
-import Hslogic.Parse
-import Hslogic.Solve
-import Hslogic.Types
-import System.Console.ANSI
-import System.Exit
-import System.IO (BufferMode (..), hSetBuffering, stdout, putStrLn)
-import Hslogic.Types (Clause)
+import Control.Exception (IOException, catch)
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.State (StateT, get, put, runStateT)
+import Hslogic.Parse (clauseParser, doParse, formulaParser)
+import Hslogic.Solve (Clauses, contextWith, ctxTrace, runSolver, solver)
+import Hslogic.Types (Clause, PrettyPrintable (pp), Subst)
+import System.Console.ANSI (Color (Green, Red), ColorIntensity (Dull), ConsoleLayer (Foreground), SGR (..), setSGR)
+import System.Exit (exitSuccess)
 
 data CurrentState = C [Clause] [Subst]
 
@@ -34,7 +35,7 @@ trySolving :: Clauses -> String -> StateT CurrentState IO ()
 trySolving clauses s = case doParse formulaParser s of
   Left e -> color Red $ liftIO (putStrLn e)
   Right t ->
-    let (sols, ctx) = runState (runSolver (solutions clauses [t])) (Context Intuitionistic clauses [])
+    let (sols, ctx) = runIdentity $ runStateT (runSolver $ solver [t]) (contextWith clauses)
      in displaySolution clauses sols >> liftIO (print (ctxTrace ctx))
 
 extendClauses :: Clauses -> [Subst] -> String -> StateT CurrentState IO ()
@@ -57,5 +58,5 @@ loop = do
     c -> extendClauses clauses sol c
   loop
 
-main :: IO ()
-main = hSetBuffering stdout NoBuffering >> runStateT loop (C [] []) >> return ()
+run :: IO ()
+run = void (runStateT loop (C [] []))
