@@ -4,8 +4,8 @@
 -- | Basic unification essentially copied verbatim from http://pragprog.com/magazines/2013-06/unification
 module Hslogic.Unify where
 
-import qualified Data.Map as H
 import Data.List (union, (\\))
+import qualified Data.Map as H
 import Data.String (fromString)
 import Hslogic.Types
 
@@ -42,7 +42,6 @@ instance Substitution Subst where
   s -/- vs = Subst $ H.filterWithKey (\k _ -> k `elem` vs) (substMap s)
 
 -- | Renames bound and free variables of a clause to fresh variables
---
 fresh :: Int -> Clause -> (Int, Clause)
 fresh count (Clause ch cps) =
   let bound = vars_in ch
@@ -100,6 +99,9 @@ instance Unifiable Term where
 infixl 8 <->
 
 -- | Unify two unifiable terms
---
 (<->) :: Term -> Term -> Maybe Subst
 (<->) = unify
+
+-- | Partial unification operator, mostly to improve readability.
+(<=>) :: Term -> Term -> [(VarName, Term)]
+a <=> b = maybe [] toList $ a `unify` b

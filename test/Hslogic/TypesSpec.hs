@@ -7,7 +7,7 @@ import Control.Monad.State (runStateT)
 import Hslogic.Parse (clause, formula, term)
 import Hslogic.Solve (Goal (..), cakes, contextWith, courses, runSolver, sampleClauses, selectClause, solutions)
 import Hslogic.Types (Term (..), VarName (..), pp, pretty, toList)
-import Hslogic.Unify (fresh, (<->))
+import Hslogic.Unify (fresh, (<=>))
 import Test.Hspec (Spec, describe, it, pending, shouldBe)
 
 spec :: Spec
@@ -18,20 +18,12 @@ spec = do
 
   describe "unify" $ do
     it "unifies two unifiable terms" $ do
-      fmap
-        toList
-        ( Fn "install" [Var (VarName "X")]
-            <-> Fn "install" [Fn "check" [Var (VarName "Y")]]
-        )
-        `shouldBe` Just [("X", Fn "check" [Var "Y"])]
+      Fn "install" [Var "X"] <=> Fn "install" [Fn "check" [Var "Y"]]
+        `shouldBe` [("X", Fn "check" [Var "Y"])]
 
     it "fails to unify two terms" $ do
-      fmap
-        toList
-        ( Fn "install" [Var (VarName "X")]
-            <-> Fn "foo" [Fn "bar" []]
-        )
-        `shouldBe` Nothing
+      Fn "install" [Var "X"] <=> Fn "foo" [Fn "bar" []]
+        `shouldBe` []
 
   describe "fresh variables" $ do
     it "renames bound and free variables to fresh ones" $ do
