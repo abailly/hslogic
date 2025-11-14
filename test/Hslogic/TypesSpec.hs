@@ -25,6 +25,14 @@ spec = do
         )
         `shouldBe` Just [("X", Fn "check" [Var "Y"])]
 
+    it "fails to unify two terms" $ do
+      fmap
+        toList
+        ( Fn "install" [Var (VarName "X")]
+            <-> Fn "foo" [Fn "bar" []]
+        )
+        `shouldBe` Nothing
+
   describe "fresh variables" $ do
     it "renames bound and free variables to fresh ones" $ do
       fresh 1 (clause "foo(X) <= bar(Z), X, quux(Z), Y.")

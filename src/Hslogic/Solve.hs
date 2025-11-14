@@ -81,8 +81,8 @@ courses =
 cakes :: Clauses
 cakes =
   mkClauses
-    [ "have(X) <= X.",
-      "eat(X)  <= X."
+    [ "have(X) <= X.", -- if there is a cake, you can have it
+      "eat(X)  <= X."  -- if there is a cake, you can eat it
     ]
 
 data Logic = Intuitionistic | Linear deriving (Eq, Show)
