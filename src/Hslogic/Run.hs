@@ -58,5 +58,8 @@ loop = do
     c -> extendClauses clauses sol c
   loop
 
-run :: IO ()
-run = void (runStateT loop (C [] []))
+-- * Top-level run
+run :: [String] -> IO ()
+run _args = do
+  let state = C [] []
+  void (runStateT loop state)

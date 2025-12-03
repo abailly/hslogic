@@ -19,8 +19,10 @@ Library
                       mtl,
                       transformers,
                       ansi-terminal,
+                      optparse-applicative,
                       QuickCheck
   exposed-modules:    Hslogic.Types,
+                      Hslogic.Options,
                       Hslogic.Parse,
                       Hslogic.Solve,
                       Hslogic.Unify,
@@ -39,8 +41,9 @@ Executable hslogic
 Test-Suite hslogic-test
     type:             exitcode-stdio-1.0
     main-is:          Spec.hs
-    other-modules:    Hslogic.TypesSpec,
+    other-modules:    Hslogic.TypesSpec
                       Hslogic.ParseSpec
+                      Hslogic.RunSpec
     hs-source-dirs:   test
     build-depends:    base,
                       directory,
