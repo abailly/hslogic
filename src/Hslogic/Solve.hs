@@ -60,9 +60,9 @@ mkClauses = map (fromRight . doParse clauseParser)
 sampleClauses :: Clauses
 sampleClauses =
   mkClauses
-    [ "foo(bar) <= qix.",
-      "foo(baz) <= quux.",
-      "foo(X)   <= baz (X).",
+    [ "foo(bar) :- qix.",
+      "foo(baz) :- quux.",
+      "foo(X)   :- baz (X).",
       "baz(quux).",
       "qix."
     ]
@@ -75,14 +75,14 @@ courses =
       "took(sue,cs240).",
       "took(bob,cs120).",
       "took(bob,cs370).",
-      "canGraduate(X) <= took(X,cs120), took(X,cs121), took(X,cs240), took(X,cs370)."
+      "canGraduate(X) :- took(X,cs120), took(X,cs121), took(X,cs240), took(X,cs370)."
     ]
 
 cakes :: Clauses
 cakes =
   mkClauses
-    [ "have(X) <= X.", -- if there is a cake, you can have it
-      "eat(X)  <= X."  -- if there is a cake, you can eat it
+    [ "have(X) :- X.", -- if there is a cake, you can have it
+      "eat(X)  :- X."  -- if there is a cake, you can eat it
     ]
 
 data Logic = Intuitionistic | Linear deriving (Eq, Show)

@@ -27,17 +27,17 @@ spec = do
 
   describe "fresh variables" $ do
     it "renames bound and free variables to fresh ones" $ do
-      fresh 1 (clause "foo(X) <= bar(Z), X, quux(Z), Y.")
-        `shouldBe` (4, clause "foo(X1) <= bar(X2), X1, quux(X2), X3.")
+      fresh 1 (clause "foo(X) :- bar(Z), X, quux(Z), Y.")
+        `shouldBe` (4, clause "foo(X1) :- bar(X2), X1, quux(X2), X3.")
 
   describe "selectClauses" $ do
     it "selects a unifiable clause and returns a goal" $ do
-      let Just (goal, clauses) = selectClause 1 (map clause ["foo(bar) <= qix.", "foo(X) <= baz (X)."]) (term "foo(foo)")
+      let Just (goal, clauses) = selectClause 1 (map clause ["foo(bar) :- qix.", "foo(X) :- baz (X)."]) (term "foo(foo)")
 
       toList (goalSubstitution goal) `shouldBe` [("X1", Fn "foo" [])]
 
     it "selects another unifiable clause and returns a goal" $ do
-      let Just (goal, clauses) = selectClause 1 (map clause ["foo(bar) <= qix.", "foo(X) <= baz (X)."]) (term "foo(X)")
+      let Just (goal, clauses) = selectClause 1 (map clause ["foo(bar) :- qix.", "foo(X) :- baz (X)."]) (term "foo(X)")
 
       toList (goalSubstitution goal) `shouldBe` [("X", Fn "bar" [])]
 

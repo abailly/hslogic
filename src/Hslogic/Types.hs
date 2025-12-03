@@ -117,7 +117,7 @@ instance Show Term where
 
 instance PrettyPrintable Clause where
   pp (Clause h []) = pp h <> char '.'
-  pp (Clause h (p:ps)) = pp h <> text " <= " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
+  pp (Clause h (p:ps)) = pp h <> text " :- " <> pp p <> hcat [text ", " <> pp p' | p' <- ps ] <> char '.'
 
 instance Show Clause where
   show = show . pp

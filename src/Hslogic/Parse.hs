@@ -48,7 +48,7 @@ clauseParser = do
   where
     premises :: Parser [Term]
     premises =
-      string "<="
+      string ":-"
         >> spaces
         >> ( termParser
                `sepBy` (spaces >> char ',' >> spaces)
