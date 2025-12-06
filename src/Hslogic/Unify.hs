@@ -104,4 +104,4 @@ infixl 8 <->
 
 -- | Partial unification operator, mostly to improve readability.
 (<=>) :: Term -> Term -> [(VarName, Term)]
-a <=> b = maybe [] toList $ a `unify` b
+a <=> b = maybe [] toList $ a <-> b

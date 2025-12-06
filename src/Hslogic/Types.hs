@@ -74,6 +74,10 @@ data Formula = T Term
              | Term :* Formula   -- ^Multiplicative conjunction (in linear context) or more simply conjunction (in intuitionistic context)
                deriving (Eq,Read)
 
+term :: Formula -> Maybe Term
+term (T t)  = Just t
+term _ = Nothing
+
 instance Deep Formula where
   deep = \case
     T t -> deep t
@@ -91,6 +95,7 @@ genFormula n = oneof [ T <$> genTerm n
                     , (:-@) <$> genTerm n <*> genFormula (n - 1)
                     , (:*) <$> genTerm n <*> genFormula (n - 1)
                     ]
+
 newtype Subst = Subst { substMap :: Map VarName Term }
   deriving Eq
 

@@ -20,6 +20,7 @@ Library
                       transformers,
                       ansi-terminal,
                       optparse-applicative,
+                      safe-exceptions,
                       QuickCheck
   exposed-modules:    Hslogic.Types,
                       Hslogic.Options,
@@ -44,6 +45,7 @@ Test-Suite hslogic-test
     other-modules:    Hslogic.TypesSpec
                       Hslogic.ParseSpec
                       Hslogic.RunSpec
+                      Hslogic.UnifySpec
     hs-source-dirs:   test
     build-depends:    base,
                       directory,
