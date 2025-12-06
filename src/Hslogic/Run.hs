@@ -14,8 +14,9 @@ import Data.Function ((&))
 import Data.Functor (($>))
 import Hslogic.Options (Options (..), parseArgs)
 import Hslogic.Parse (clauseParser, doParse, formulaParser)
-import Hslogic.Solve (Clauses, contextWith, ctxTrace, runSolver, solver)
+import Hslogic.Solve (Clauses, contextWith, ctxTrace, runSolver, solutions, solver)
 import Hslogic.Types (Clause, PrettyPrintable (pp), Subst)
+import Hslogic.Unify (emptySubstitution)
 import System.Console.ANSI (Color (Green, Red), ColorIntensity (Dull), ConsoleLayer (Foreground), SGR (..), setSGR)
 
 data CurrentState = C [Clause] [Subst]
@@ -48,9 +49,16 @@ trySolving eff s = do
   case doParse formulaParser s of
     Left e -> lift $ color eff Red $ writeLine eff e
     Right t -> do
-      let (sols, ctx) = runIdentity $ runStateT (runSolver $ solver [t]) (contextWith cls)
-      modify (\(C cls' ss) -> C cls' (ss <> sols))
-      lift (writeString eff (show $ ctxTrace ctx))
+      case solutions cls [t] of
+        [] -> lift $ color eff Red $ writeLine eff "failure"
+        sols -> do
+          let substs = filter (/= emptySubstitution) sols
+              message =
+                if null substs
+                  then "success"
+                  else "success. Type [Enter] to list solutions."
+          lift $ color eff Green $ writeLine eff message
+          modify (\(C cls' ss) -> C cls' (ss <> substs))
 
 extendClauses :: (Monad m) => Effects m -> String -> StateT CurrentState m ()
 extendClauses eff c = do

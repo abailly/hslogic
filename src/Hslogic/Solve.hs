@@ -230,14 +230,14 @@ unify' t t' = \case
   Nothing -> Nothing
   Just s -> (s `extend_with`) <$> unify (apply s t) (apply s t')
 
--- | Generate all solutions for given query against given clauses.
-solutions :: Clauses -> [Formula] -> [Subst]
-solutions cs ts =
-  let (r, c) = runIdentity $ runStateT (runSolver $ solver ts) (contextWith cs)
-   in r
-
 solver :: [Formula] -> Solver [Subst]
 solver ts = do
   cls <- gets ctxClauses
   let results = solve1 cls (Just emptySubstitution) (mapMaybe Hslogic.Types.term ts)
   pure $ enumerate results
+
+-- | Generate all solutions for given query against given clauses.
+solutions :: Clauses -> [Formula] -> [Subst]
+solutions cs ts =
+  let (r, _c) = runIdentity $ runStateT (runSolver $ solver ts) (contextWith cs)
+   in r
